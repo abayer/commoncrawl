@@ -1,0 +1,22 @@
+subversion $Revision: 13 $ $Date: 2009-12-23 22:49:31 +0100 (Mi, 23 Dez 2009) $
+
+2009-12-23 
+* Corrected LMWriter class to write correct profiles.
+* added new language profile telugu to ngramj
+* Added cryptographic interesting CosWeightMetric to cngram
+* Extended NGramProfileImpl to support different modes of blank handling. Unfortunately not yet useful, since corresponding profiles are missing.
+* New samples directory contains now a proof of concept solution for a dictionary free, ngram based attack on Vignere codes. This sample can solve or give easily solvable near solutions to surprisingly short samples of text.
+
+2006-03-29 work in progress no packaged release
+* Corrected mistakes in the documentation.
+
+2006-03-27 version 1.0
+* First public release of CNgram: Character based language recognition!
+* NGramJ wakes from stasis after over 4 years.
+* Some optimizations of NGramJ memory performance.
+* Added ant based building.
+* Moved ngram to the de.spieleck.app.ngramj Package.
+* Corrected typographic wrong class name "Cathegory".
+* Provide self executing archives for both CNgram and NGramJ.
+* CNgramj (2 prerelease) straightened NGramProfiles
+* CNgramj (2 prerelease) added new Nutch profiles

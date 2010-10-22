@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<project name="NGramJ" default="jar">
+
+    <property file="build.properties" />
+    <property file="build.number" />
+    <property file="${src.dir}/svn.properties" />
+
+    <property name="Name" value="NGramJ" />
+    <property name="markerClass"
+        value="${src.dir}/de/spieleck/app/ngramj/Version.java"/>
+    <property name="javadoc.dir" value="${doc.dir}/javadoc"/>
+
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="init">
+        <mkdir dir="${build.dir}" />
+        <tstamp>
+            <format property="build.stamp" pattern="yyyy-MM-dd HH:mm:ss"/>
+            <format property="build.version" pattern="yyMMdd"/>
+        </tstamp>
+        <echo>stamp=${build.stamp} build.version=${build.version} version=${version}</echo>
+    </target>
+
+    <target name="makeZipTask">
+        <taskdef classname="de.spieleck.helper.PrefixZipTask" name="xzip"
+              classpath="${spieleck.jar}" >
+            <classpath>
+                <fileset dir="${antlib.dir}/">
+                      <include name="*.jar" />
+                </fileset>
+            </classpath>
+        </taskdef>
+    </target>
+
+    <target name="compile" depends="init">
+        <copy file="${markerClass}.tpl" tofile="${markerClass}" overwrite="yes">
+            <filterset>
+                <filter token="buildstamp" value="${build.stamp}"/>
+                <filter token="id" value="${build.version}[${build.number}]"/>
+                <filter token="version" value="${version}"/>
+            </filterset>
+        </copy>
+        <javac target="1.4"
+               source="1.4"
+                srcdir="${src.dir}"
+                destdir="${build.dir}"
+                listfiles="yes"
+                debug="yes"
+            >
+            <classpath refid="compile.classpath"/>
+        </javac>
+    </target>
+
+    <target name="copyother" depends="init">
+        <copy file="${src.dir}/log4j.properties" todir="${build.dir}"/>
+        <copy file="LICENSE.txt" todir="${build.dir}"/>
+        <copy todir="${build.dir}">
+            <fileset dir="${src.dir}">
+                <exclude name="**/*.java"/>
+                <exclude name="**/*.tpl"/>
+                <exclude name="testdata1/*"/>
+                <exclude name="doc/*"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="jar" depends="jar1, jar2" />
+
+    <target name="jar1" depends="compile, copyother">
+        <jar jarfile="${ngramj.jar}"
+                basedir="${build.dir}"
+                manifest="${src.dir}/ngramj.mf"
+                includes="LM/*.lm,de/spieleck/app/ngramj/**/*,de/spieleck/util/**/*"
+            />
+    </target>
+
+    <target name="jar2" depends="compile, copyother">
+        <jar jarfile="${cngram.jar}"
+                basedir="${build.dir}"
+                manifest="${src.dir}/cngram.mf"
+                includes="de/spieleck/app/cngram/**/*,de/spieleck/util/CharTrie*"
+            />
+    </target>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- Creates the documentation                                   -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <target name="copydocart" depends="init">
+      <copy file="${src.dir}/sestyle.css" tofile="${doc.dir}/stylesheet.css"/>
+      <copy todir="${doc.dir}/images">
+        <fileset dir="${doc.src}">
+            <include name="*.gif"/>
+            <include name="*.png"/>
+        </fileset>
+      </copy>
+    </target>
+
+    <!-- 
+        This is a dirty and not necessarily portable workarround for
+        above problem.
+        NOTE: We do not create the (linked) quality reports and the 
+        metametric since this would require everyone who wants to
+        have some docs, to install all those tools!
+      -->
+    <target name="docs" depends="init, javadoc, copydocart">
+      <java fork="true" jar="${antlib.dir}/saxon.jar" failonerror="true">
+        <arg value="-o"/>
+        <arg value="${doc.dir}/all.html"/>
+        <arg value="${doc.src}/intro.html"/>
+        <arg value="${doc.src}/docs.xsl"/>
+        <!-- Docs say value is better, but I didn't work it out. -->
+        <arg line="destpath=${doc.dir}/"/>
+        <arg line='stamp="${build.stamp}"'/>
+        <arg line='version="${version}"'/>
+      </java>
+      <delete file="${doc.dir}/all.html"/>
+    </target>
+
+    <target name="docs.zip" depends="init-dist, docs, makeZipTask">
+        <xzip zipfile="${dist.dir}/${dist.prefix}-doc.zip"
+                globalprefix="">
+            <fileset dir="doc" />
+        </xzip>
+    </target>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- Creates the API documentation                               -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <target name="javadoc_check" depends="init">
+      <uptodate property="javadoc.notrequired"
+                targetfile="${javadoc.dir}/package-list" >
+          <srcfiles dir= "${src.dir}"
+                includes="**/*.java,de/**/*.html"
+                excludes="**/Version.java"/>
+      </uptodate>
+    </target>
+
+    <target name="javadoc" depends="init, javadoc_check"
+            unless="javadoc.notrequired"
+            description="Create API documentation">
+      <mkdir dir="${javadoc.dir}"/>
+      <javadoc sourcepath="${src.dir}"
+               packagenames="de.spieleck.*"
+               destdir="${javadoc.dir}"
+               author="true"
+               version="true"
+               windowtitle="${Name} ${version} API"
+               doctitle="${Name} ${version}"
+               use="yes"
+               splitindex="true"
+               header="&lt;a target='_top' href='{@docRoot}/../index.html'&gt;Jacson&lt;/a&gt;"
+               footer="&lt;a target='_top' href='http://spieleck.de'&gt;spieleck.de&lt;/a&gt;"
+               linksource="true"
+           >
+            <classpath refid="compile.classpath"/>
+      </javadoc>
+      <copy file="${src.dir}/sestyle.css" 
+            tofile="${doc.dir}/javadoc/stylesheet.css"
+            preservelastmodified="true"
+            />
+    </target>
+
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <!-- Distribution building                                       -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+    <target name="clean">
+        <delete dir="${build.dir}" includeEmptyDirs="true"/>
+        <delete dir="${doc.dir}" includeEmptyDirs="true"/>
+    </target>
+
+    <target name="init-dist" depends="init, makeZipTask">
+        <mkdir dir="${dist.dir}" />
+        <property name="packname" value="ngramj" />
+        <property name="dist.id"
+            value="${version}-${build.number}.${build.version}"/>
+        <property name="dist.prefix" value="${packname}-${dist.id}"/>
+    </target>
+
+    <target name="dist.bin" depends="jar, init-dist, makeZipTask">
+        <xzip zipfile="${dist.dir}/${dist.prefix}-bin.zip"
+                globalprefix="">
+            <fileset dir=".">
+                <include name="${ngramj.jar}"/>
+                <include name="${cngram.jar}"/>
+                <include name="${lib.dir}/*.jar"/>
+            </fileset>
+        </xzip>
+    </target>
+
+    <target name="dist.all" depends="jar, init-dist, makeZipTask, docs">
+        <xzip zipfile="${dist.dir}/${dist.prefix}-all.zip"
+                globalprefix="${dist.prefix}/">
+            <fileset dir=".">
+                <include name="*"/>
+                <include name="${lib.dir}/*.jar"/>
+                <include name="${antlib.dir}/*.jar"/>
+                <include name="${src.dir}/**/*"/>
+                <exclude name="*.swp"/>
+                <exclude name="*.bat"/>
+                <exclude name="pre-sf"/>
+                <exclude name="dist"/>
+            </fileset>
+        </xzip>
+    </target>
+
+    <target name="dist" depends="clean, dist.bin, docs.zip, dist.all">
+        <buildnumber/>
+    </target>
+
+</project>
