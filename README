@@ -1,0 +1,14 @@
+The start of the shared commoncrawl code repository.
+
+Please set hadoop.version and hadoop.path in build.properties to point to your version of 
+hadoop. 
+
+Once commoncrawl.jar has been built, you can execute a job/sample via the bin/launcher.sh script.
+
+For example, to run the BasicArcFileReaderSample against the ARC file 2010/01/07/18/1262876244253_18.arc.gz 
+in the main commoncrawl bucket, commoncrawl-crawl-002, you would run the following command line:
+
+  bin/launcher.sh org.commoncrawl.samples.BasicArcFileReaderSample <<AWS ACCESS KEY>>  <<AWS SECRET KEY>> commoncrawl-crawl-002 2010/01/07/18/1262876244253_18.arc.gz
+
+The luancher runs the command in the background. You can monitor progress via either ./logs/<<ClassName>>.log for LOG output, or ./logs/<<ClassName>>_run.log for stdout output.
+
