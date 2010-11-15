@@ -48,8 +48,8 @@ fi
 
 
 if [ "$HADOOP_HOME" = "" ]; then
-	echo "HADOOP_HOME not defined. Attempting to locate via ~/build.properties"
-	HADOOP_HOME=`cat ~/build.properties | grep "hadoop.path" | sed 's/.*=\(.*\)$/\1/'`
+	echo "HADOOP_HOME not defined. Attempting to locate via build.properties"
+	export HADOOP_HOME=`cat $CCAPP_HOME/build.properties | grep "hadoop.path" | sed 's/.*=\(.*\)$/\1/'`
 	
 	if ! [ "$HADOOP_HOME" = "" ]; then
 		echo "Derived HADOOP_HOME from build.properties to be:$HADOOP_HOME"
@@ -59,11 +59,21 @@ if [ "$HADOOP_HOME" = "" ]; then
 	fi
 fi
 
-# Try to locate hadoop home if not set ...  
-if [ -z $HADOOP_HOME/build/hadoop-*-core.jar ]; then 
+if [ -f $HADOOP_HOME/build/hadoop-*-core.jar ]; then 
     HADOOP_JAR=`ls $HADOOP_HOME/build/hadoop-*-core.jar`
-else
+elif [ -f $HADOOP_HOME/hadoop-*-core.jar ]; then
     HADOOP_JAR=`ls $HADOOP_HOME/hadoop-*-core.jar`
+elif [ -f "${HADOOP_HOME}/build/hadoop-core-*.jar" ]; then
+    HADOOP_JAR=`ls $HADOOP_HOME/build/hadoop-core-*.jar`
+elif [ -f ${HADOOP_HOME}/hadoop-core-*.jar ]; then
+    HADOOP_JAR=`ls $HADOOP_HOME/hadoop-core-*.jar`
+fi
+
+if [ "$HADOOP_JAR" = "" ]; then
+  echo "Unable to locate hadoop core jar file. Please check your hadoop installation."
+  exit 1
+else
+  echo HADOOP JAR IS:${HADOOP_JAR}
 fi
 
 if [ "$HADOOP_CONF_DIR" = "" ]; then
@@ -141,11 +151,7 @@ CCAPP_VMARGS="$CCAPP_VMARGS -Dcc.native.lib.path=${CCAPP_LIB_DIR}/native/${JAVA_
 
 CCAPP_CMD_LINE="$JAVA $CCAPP_VMARGS -classpath $CLASSPATH $CCAPP_CLASS $@"
 CCAPP_RUN_LOG=$CCAPP_LOG_DIR/${CCAPP_NAME}_run.log
-echo "CCAPP_CMD_LINE:$CCAPP_CMD_LINE"
-nohup $CCAPP_CMD_LINE "$@" > $CCAPP_RUN_LOG 2>&1 < /dev/null &
-echo $! > "/tmp/${CCAPP_NAME}.pid"
-echo "Process PID Is:"$! " StdOut,StdErr logged to:" $CCAPP_RUN_LOG
-sleep 1; head "$CCAPP_RUN_LOG"
+$CCAPP_CMD_LINE "$@" | tee $CCAPP_RUN_LOG
 
 
 

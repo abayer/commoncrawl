@@ -27,7 +27,7 @@
    </fail>
   
   <property name="src.dir" value="${basedir}/src"/>
-	<property name="amazon.src.dir" value="${basedir}/lib/third_party/amazon"/>
+  <property name="amazon.src.dir" value="${basedir}/lib/third_party/amazon"/>
   <property name="lib.dir" value="${basedir}/lib"/>
   <property name="conf.dir" value="${basedir}/conf"/>
   
@@ -72,6 +72,7 @@
     <fileset dir="${hadoop.path}">
       <include name="lib/**/*.jar"/>
       <include name="hadoop-*-core.jar"/>
+      <include name="hadoop-core-*.jar"/>	
       <exclude name="lib/jets3t-0.6.1.jar"/>
     </fileset>
   </path>
